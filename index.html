@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FAISS Visual Learning Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg: #08090d;
+  --bg2: #0f1117;
+  --bg3: #161820;
+  --card: #13151c;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.13);
+  --text: #dde1f0;
+  --text2: #8b90a8;
+  --text3: #565a72;
+  --purple: #b59cf7;
+  --blue: #6eb4f7;
+  --teal: #38d9b9;
+  --amber: #f5c842;
+  --orange: #f48c3c;
+  --pink: #f07ab8;
+  --green: #52d98c;
+  --red: #f06b6b;
+  --indigo: #818cf8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.65;font-size:15px;overflow-x:hidden}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;background:rgba(8,9,13,0.94);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 1.5rem;height:50px;gap:2px;overflow-x:auto}
+nav::-webkit-scrollbar{display:none}
+.nav-logo{font-weight:700;font-size:14px;color:var(--purple);margin-right:16px;white-space:nowrap;flex-shrink:0}
+nav a{color:var(--text3);text-decoration:none;font-size:12.5px;font-weight:500;padding:0 11px;height:50px;display:flex;align-items:center;border-bottom:2px solid transparent;white-space:nowrap;transition:color .2s,border-color .2s;flex-shrink:0}
+nav a:hover{color:var(--text);border-color:var(--purple)}
+
+/* LAYOUT */
+.page{max-width:1080px;margin:0 auto;padding:0 1.5rem}
+section{padding:4rem 0}
+.section-badge{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--purple);margin-bottom:.7rem}
+h2{font-size:clamp(1.5rem,3vw,2.1rem);font-weight:700;line-height:1.15;margin-bottom:.6rem}
+h3{font-size:1.1rem;font-weight:600;margin-bottom:.4rem}
+h4{font-size:.9rem;font-weight:600;margin-bottom:.3rem}
+p{color:var(--text2);margin-bottom:.9rem}
+p:last-child{margin-bottom:0}
+
+/* HERO */
+.hero{padding:5rem 0 3.5rem;text-align:center}
+.hero h1{font-size:clamp(2rem,5vw,3.2rem);font-weight:700;line-height:1.1;letter-spacing:-.02em;background:linear-gradient(135deg,var(--purple) 0%,var(--blue) 50%,var(--teal) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1rem}
+.hero-sub{font-size:1.05rem;color:var(--text2);max-width:580px;margin:0 auto 2rem}
+.hero-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:2rem}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:20px}
+.badge.purple{background:rgba(181,156,247,0.1);color:var(--purple);border:1px solid rgba(181,156,247,0.2)}
+.badge.blue{background:rgba(110,180,247,0.1);color:var(--blue);border:1px solid rgba(110,180,247,0.2)}
+.badge.teal{background:rgba(56,217,185,0.1);color:var(--teal);border:1px solid rgba(56,217,185,0.2)}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.4rem}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.9rem}
+
+/* DIVIDER */
+.divider{height:1px;background:var(--border);margin:0}
+
+/* METHOD CARDS */
+.method-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.3rem;position:relative;overflow:hidden;cursor:default;transition:border-color .2s,transform .15s}
+.method-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.method-card .stripe{position:absolute;top:0;left:0;right:0;height:3px;border-radius:14px 14px 0 0}
+.method-label{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;padding:3px 9px;border-radius:5px;margin-bottom:.7rem}
+.stars{display:flex;gap:3px;margin-top:.7rem}
+.star{width:10px;height:10px;border-radius:2px}
+.star.filled{opacity:1}
+.star.empty{opacity:.15}
+
+/* CHART CONTAINERS */
+.chart-wrap{position:relative;width:100%;margin:1.2rem 0}
+.chart-box{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.2rem 1.4rem}
+.chart-title{font-size:13px;font-weight:600;color:var(--text2);margin-bottom:1rem;letter-spacing:.3px}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:.7rem;margin:1rem 0}
+.stat{background:var(--bg3);border-radius:10px;padding:.9rem;text-align:center}
+.stat .val{font-size:1.4rem;font-weight:700;line-height:1}
+.stat .lbl{font-size:11px;color:var(--text3);margin-top:4px}
+
+/* HIGHLIGHT BOXES */
+.highlight{border-radius:12px;padding:1.2rem 1.4rem;margin:1rem 0;border-left:3px solid}
+.highlight.info{background:rgba(110,180,247,0.06);border-color:var(--blue)}
+.highlight.warn{background:rgba(245,200,66,0.06);border-color:var(--amber)}
+.highlight.success{background:rgba(82,217,140,0.06);border-color:var(--green)}
+.highlight.danger{background:rgba(240,107,107,0.06);border-color:var(--red)}
+.highlight.purple{background:rgba(181,156,247,0.06);border-color:var(--purple)}
+.highlight h4{color:var(--text);margin-bottom:.4rem}
+.highlight p{margin:0}
+
+/* STEP FLOW */
+.steps{display:flex;gap:0;align-items:stretch;flex-wrap:wrap;margin:1.2rem 0}
+.step{flex:1;min-width:110px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:.9rem;margin:3px;text-align:center}
+.step-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin:0 auto .5rem}
+.step h4{font-size:12px;font-weight:600;margin-bottom:3px}
+.step p{font-size:11px;color:var(--text3);margin:0}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:13px;margin:1rem 0}
+.data-table th{background:var(--bg3);padding:9px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text3);border-bottom:1px solid var(--border)}
+.data-table td{padding:9px 14px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(255,255,255,0.02)}
+.pill{display:inline-block;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px}
+
+/* LEGEND */
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:.8rem;font-size:12px}
+.legend-item{display:flex;align-items:center;gap:5px;color:var(--text2)}
+.legend-dot{width:10px;height:10px;border-radius:2px;flex-shrink:0}
+
+/* DIAGRAM SVG */
+svg text{font-family:'DM Sans',sans-serif}
+
+/* READING GUIDE */
+.reading-guide{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-top:1.2rem}
+.reading-guide h4{font-size:13px;font-weight:600;margin-bottom:.6rem;color:var(--teal)}
+.reading-guide ul{padding-left:1.2rem;font-size:13px;color:var(--text2);line-height:1.9}
+
+/* TABS */
+.tabs{display:flex;gap:4px;margin-bottom:1rem;border-bottom:1px solid var(--border);padding-bottom:0}
+.tab{font-size:13px;font-weight:500;padding:8px 14px;border-radius:8px 8px 0 0;cursor:pointer;color:var(--text3);border:none;background:none;transition:color .2s,background .2s;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tab.active{color:var(--purple);border-color:var(--purple);background:rgba(181,156,247,0.06)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* COMPARISON BAR */
+.cbar{display:flex;align-items:center;gap:8px;margin:5px 0}
+.cbar-label{font-size:12px;color:var(--text2);width:72px;text-align:right;flex-shrink:0}
+.cbar-track{flex:1;background:var(--bg);border-radius:3px;height:18px;overflow:hidden;border:1px solid var(--border)}
+.cbar-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding:0 6px;font-size:10.5px;font-weight:600;color:rgba(0,0,0,0.75)}
+
+/* GOOD/BAD indicators */
+.g{color:var(--green)}
+.y{color:var(--amber)}
+.r{color:var(--red)}
+.b{color:var(--blue)}
+.p{color:var(--purple)}
+.t{color:var(--teal)}
+.o{color:var(--orange)}
+
+/* CODE */
+pre,code{font-family:'DM Mono',monospace;font-size:12.5px}
+pre{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:1.1rem 1.3rem;overflow-x:auto;line-height:1.7;margin:.8rem 0}
+.kw{color:var(--purple)}.fn{color:var(--blue)}.cm{color:var(--text3)}.str{color:var(--green)}.num{color:var(--orange)}.var{color:var(--teal)}
+</style>
+</head>
+<body>
+
+<nav>
+  <span class="nav-logo">FAISS Guide</span>
+  <a href="#start">Start Here</a>
+  <a href="#notebook">The Notebook</a>
+  <a href="#methods">9 Methods</a>
+  <a href="#charts">Chart Guide</a>
+  <a href="#data">Live Data</a>
+  <a href="#scenarios">When to Use</a>
+  <a href="#paper">Paper Analysis</a>
+</nav>
+
+<!-- ═══════════════════════════════════════════════════════ HERO -->
+<div class="hero page" id="top">
+  <div class="hero-badges">
+    <span class="badge purple">CSE488 · Big Data Analytics</span>
+    <span class="badge blue">East West University</span>
+    <span class="badge teal">Complete Beginner's Guide</span>
+  </div>
+  <h1>FAISS Vector Search<br>Visual Learning Guide</h1>
+  <p class="hero-sub">A complete beginner-friendly explanation of vector databases, FAISS indexing methods, and every chart generated by the assignment notebook — with real numbers from the actual experiment.</p>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 1: START HERE -->
+<div class="page" id="start">
+<section>
+  <div class="section-badge">Section 01 · Foundation</div>
+  <h2>Start Here — What Problem Are We Solving?</h2>
+  <p>Before touching a single line of code, you need to understand <em style="color:var(--text)">why</em> this problem matters. Let's build the mental model from scratch.</p>
+
+  <!-- Analogy -->
+  <div class="grid2" style="margin-top:1.5rem">
+    <div class="card">
+      <h3>🧠 What is an "embedding"?</h3>
+      <p>AI models can't understand raw text or images. So they convert everything into a list of numbers — called a <strong style="color:var(--text)">vector</strong> or <strong style="color:var(--text)">embedding</strong>.</p>
+      <div style="background:var(--bg3);border-radius:8px;padding:.9rem;margin-top:.8rem;font-size:13px">
+        <div style="color:var(--text3);margin-bottom:5px">Example: "The cat sat on a mat"</div>
+        <div style="color:var(--teal);font-family:'DM Mono',monospace;font-size:12px">→ [0.12, -0.56, 0.88, 0.34, -0.21, 0.67, ...]</div>
+        <div style="color:var(--text3);font-size:11px;margin-top:5px">960 numbers representing the "meaning" of this sentence</div>
+      </div>
+      <p style="margin-top:.8rem;font-size:13px">Two similar sentences will produce vectors that are <strong style="color:var(--text)">close together</strong> in space. Two unrelated sentences will be far apart.</p>
+    </div>
+    <div class="card">
+      <h3>🔍 What is similarity search?</h3>
+      <p>Given a query (e.g. "Where is the cat?"), find the most similar items from a database of millions of stored embeddings.</p>
+      <div style="background:var(--bg3);border-radius:8px;padding:.9rem;margin-top:.8rem">
+        <div style="font-size:12px;color:var(--text2)">Real-world uses:</div>
+        <div style="margin-top:6px;display:flex;flex-direction:column;gap:5px">
+          <div style="font-size:12px"><span style="color:var(--purple)">●</span> ChatGPT searching its memory (RAG)</div>
+          <div style="font-size:12px"><span style="color:var(--blue)">●</span> Google Images — "find similar photos"</div>
+          <div style="font-size:12px"><span style="color:var(--teal)">●</span> Spotify — "users who like this song also like…"</div>
+          <div style="font-size:12px"><span style="color:var(--amber)">●</span> Amazon — product recommendations</div>
+          <div style="font-size:12px"><span style="color:var(--orange)">●</span> Fraud detection — find suspicious patterns</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- The core problem -->
+  <div style="margin-top:2rem">
+    <h3>The Core Problem: Speed vs Scale</h3>
+    <p>Here's the challenge. Imagine you have 1 million product embeddings, each with 960 dimensions (numbers). A customer searches for something. How do you find the 10 most similar products?</p>
+
+    <div class="highlight danger">
+      <h4>❌ The naive approach (what everyone tries first)</h4>
+      <p>Compare the query against every single product. 1,000,000 × 960 = <strong style="color:var(--red)">960 million comparisons per search</strong>. On a modern server, this takes about 0.6 seconds. For an e-commerce site with 1000 searches per second, that's completely unusable.</p>
+    </div>
+    <div class="highlight success">
+      <h4>✅ What FAISS does</h4>
+      <p>FAISS (Facebook AI Similarity Search) is a library with 9+ clever algorithms that find the <em>approximately</em> nearest neighbors in milliseconds. It trades a tiny bit of accuracy for massive speed gains — and for most real applications, finding the 3rd-closest item instead of the 1st-closest is perfectly acceptable.</p>
+    </div>
+  </div>
+
+  <!-- What ANN means -->
+  <div class="grid3" style="margin-top:1.5rem">
+    <div style="background:var(--bg3);border-radius:10px;padding:1rem;border:1px solid var(--border)">
+      <div style="font-size:1.6rem;margin-bottom:.4rem">🎯</div>
+      <h4 style="color:var(--blue)">Exact Search (kNN)</h4>
+      <p style="font-size:12.5px">Always finds the true nearest neighbor. 100% accurate. But must check every single vector. Unusable at scale.</p>
+    </div>
+    <div style="background:var(--bg3);border-radius:10px;padding:1rem;border:1px solid var(--border)">
+      <div style="font-size:1.6rem;margin-bottom:.4rem">⚡</div>
+      <h4 style="color:var(--purple)">Approximate (ANN)</h4>
+      <p style="font-size:12.5px">Finds a neighbor that's <em>close enough</em>. Might miss the absolute best match, but 1000× faster. Used in all production AI systems.</p>
+    </div>
+    <div style="background:var(--bg3);border-radius:10px;padding:1rem;border:1px solid var(--border)">
+      <div style="font-size:1.6rem;margin-bottom:.4rem">📊</div>
+      <h4 style="color:var(--teal)">Recall@10</h4>
+      <p style="font-size:12.5px">The key accuracy metric: "Of the 10 true nearest neighbors, how many did the algorithm actually find?" 1.0 = perfect. 0.8 = found 8 out of 10.</p>
+    </div>
+  </div>
+
+  <!-- Key vocabulary -->
+  <div class="card" style="margin-top:1.5rem">
+    <h3 style="margin-bottom:1rem">📖 Key Vocabulary (learn these first!)</h3>
+    <table class="data-table">
+      <thead><tr><th>Term</th><th>Plain English Meaning</th><th>Analogy</th></tr></thead>
+      <tbody>
+        <tr><td style="color:var(--purple);font-weight:600">Vector / Embedding</td><td>A list of numbers representing an item's "meaning"</td><td>GPS coordinates, but for meaning</td></tr>
+        <tr><td style="color:var(--blue);font-weight:600">Dimension (D)</td><td>How many numbers are in each vector</td><td>A 960-D vector has 960 numbers</td></tr>
+        <tr><td style="color:var(--teal);font-weight:600">Index</td><td>A data structure that organizes vectors for fast search</td><td>A book's index — jump to the right page fast</td></tr>
+        <tr><td style="color:var(--amber);font-weight:600">Recall@10</td><td>Fraction of true top-10 results that were found</td><td>A search engine that misses 2 of 10 results = 0.8 recall</td></tr>
+        <tr><td style="color:var(--orange);font-weight:600">QPS</td><td>Queries Per Second — how many searches per second</td><td>A cashier's checkout speed in customers/hour</td></tr>
+        <tr><td style="color:var(--pink);font-weight:600">nprobe</td><td>How many clusters to search (IVF setting)</td><td>Checking 5 vs 50 library sections when looking for a book</td></tr>
+        <tr><td style="color:var(--green);font-weight:600">Quantization</td><td>Compressing vectors to use less memory</td><td>Converting a high-res photo to a small thumbnail</td></tr>
+        <tr><td style="color:var(--indigo);font-weight:600">Voronoi cell</td><td>A region of space belonging to a cluster centroid</td><td>A country's territory — every point "belongs" to its nearest capital city</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 2: NOTEBOOK -->
+<div class="page" id="notebook">
+<section>
+  <div class="section-badge">Section 02 · The Notebook</div>
+  <h2>What the Notebook Does — Step by Step</h2>
+  <p>The notebook is a scientific benchmark — it runs controlled experiments to measure how 9 different FAISS algorithms perform under real conditions. Think of it as a "race" between algorithms.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num" style="background:rgba(181,156,247,.15);color:var(--purple)">1</div>
+      <h4>Setup</h4>
+      <p>Install faiss-gpu, h5py, psutil, sklearn, seaborn</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:rgba(110,180,247,.15);color:var(--blue)">2</div>
+      <h4>Load Data</h4>
+      <p>Read GIST-960 and DEEP-96 datasets from Google Drive</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:rgba(56,217,185,.15);color:var(--teal)">3</div>
+      <h4>Augment</h4>
+      <p>Tile + Gaussian noise to reach 100K and 1M vectors</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:rgba(245,200,66,.15);color:var(--amber)">4</div>
+      <h4>Build Indexes</h4>
+      <p>Train and add data to each of the 9 FAISS indexes</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:rgba(244,140,60,.15);color:var(--orange)">5</div>
+      <h4>Benchmark</h4>
+      <p>Search queries, measure QPS, Recall, Memory, Build time</p>
+    </div>
+    <div class="step">
+      <div class="step-num" style="background:rgba(82,217,140,.15);color:var(--green)">6</div>
+      <h4>Visualize</h4>
+      <p>Generate 8 publication-quality charts for the IEEE paper</p>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:1.5rem">
+    <div class="card">
+      <h3>📁 The Two Datasets</h3>
+      <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:.7rem">
+        <div style="background:var(--bg3);border-radius:9px;padding:.9rem;border-left:3px solid var(--blue)">
+          <div style="font-weight:700;color:var(--blue);font-size:13px">GIST-960</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">Computer vision image descriptors. Each vector has <strong style="color:var(--text)">960 numbers</strong>. This is the "hard" high-dimensional dataset. Think of it as describing a photo using 960 different features.</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:9px;padding:.9rem;border-left:3px solid var(--purple)">
+          <div style="font-weight:700;color:var(--purple);font-size:13px">DEEP-96</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">CNN feature maps from a deep learning model. Each vector has <strong style="color:var(--text)">96 numbers</strong>. This is the "easier" lower-dimensional dataset. Angular distance, normalized to L2.</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>📏 What is Measured</h3>
+      <div style="margin-top:.8rem;display:flex;flex-direction:column;gap:8px">
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border-radius:7px;padding:8px 10px">
+          <span style="font-size:13px;font-weight:600;color:var(--green)">Recall@10</span>
+          <span style="font-size:12px;color:var(--text2)">Accuracy — did we find the right results?</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border-radius:7px;padding:8px 10px">
+          <span style="font-size:13px;font-weight:600;color:var(--blue)">QPS</span>
+          <span style="font-size:12px;color:var(--text2)">Speed — searches per second</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border-radius:7px;padding:8px 10px">
+          <span style="font-size:13px;font-weight:600;color:var(--amber)">Build Time</span>
+          <span style="font-size:12px;color:var(--text2)">Setup cost — how long to build the index</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--bg3);border-radius:7px;padding:8px 10px">
+          <span style="font-size:13px;font-weight:600;color:var(--pink)">Memory (MB)</span>
+          <span style="font-size:12px;color:var(--text2)">RAM used — how much computer memory</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:1.5rem">
+    <h3>Core Code — The Benchmarking Function</h3>
+    <p>Every algorithm goes through this same function. The key line is <code>idx.search(queries, 10)</code> — ask the index "find the 10 nearest neighbors for each query".</p>
+    <pre><code><span class="kw">def</span> <span class="fn">run_benchmarks</span>(<span class="var">base</span>, <span class="var">queries</span>, <span class="var">ground_truth</span>):
+    <span class="cm"># Step 1: nlist = number of clusters = sqrt(N), a standard rule of thumb</span>
+    <span class="var">nlist</span> = int(np.sqrt(base.shape[<span class="num">0</span>]))  <span class="cm"># e.g. sqrt(1,000,000) = 1000 clusters</span>
+
+    <span class="cm"># Step 2: Build the index (varies by type)</span>
+    <span class="var">idx</span> = faiss.IndexFlatL2(<span class="var">d</span>)  <span class="cm"># example: brute-force index</span>
+    <span class="var">idx</span>.add(<span class="var">base</span>)              <span class="cm"># add all 1M vectors to the index</span>
+
+    <span class="cm"># Step 3: Search — this is the key operation we're benchmarking</span>
+    <span class="var">start</span> = time.perf_counter()
+    <span class="var">distances</span>, <span class="var">neighbor_ids</span> = <span class="var">idx</span>.search(<span class="var">queries</span>, <span class="num">10</span>)  <span class="cm"># find top-10 for each query</span>
+    <span class="var">elapsed</span> = time.perf_counter() - <span class="var">start</span>
+
+    <span class="cm"># Step 4: Calculate how fast (QPS) and how accurate (Recall@10)</span>
+    <span class="var">qps</span> = len(<span class="var">queries</span>) / <span class="var">elapsed</span>
+    <span class="cm"># Recall@10 = overlap between our results and the true nearest neighbors</span>
+    <span class="var">recall</span> = mean(overlap(<span class="var">neighbor_ids</span>, <span class="var">ground_truth</span>))</code></pre>
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 3: 9 METHODS -->
+<div class="page" id="methods">
+<section>
+  <div class="section-badge">Section 03 · The Algorithms</div>
+  <h2>The 9 Indexing Methods — Fully Explained</h2>
+  <p>Each algorithm takes a completely different approach to the same problem. Here's what each one does and why, with no prior knowledge assumed.</p>
+
+  <!-- Method 1 -->
+  <div style="margin:2rem 0;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    <div style="background:linear-gradient(90deg,rgba(110,180,247,.12),rgba(56,217,185,.06));padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="background:rgba(110,180,247,.15);color:var(--blue);font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:5px">EXACT SEARCH</div>
+      <h3 style="margin:0;font-size:1.1rem">1. IndexFlatL2 — The Gold Standard Baseline</h3>
+    </div>
+    <div class="grid2" style="padding:1.2rem 1.4rem;gap:1rem">
+      <div>
+        <h4>What it does</h4>
+        <p style="font-size:13px">Compares your query against <strong style="color:var(--text)">every single vector</strong> in the database using Euclidean (straight-line) distance. No shortcuts, no approximations. "L2" means it uses the L2 (Euclidean) distance formula: √(Σ(aᵢ−bᵢ)²).</p>
+        <div class="highlight info" style="margin-top:.7rem">
+          <h4>Real analogy</h4>
+          <p style="font-size:13px">Finding the nearest hospital by checking the distance to every hospital in the country one by one. Guaranteed to find the closest — but very slow.</p>
+        </div>
+      </div>
+      <div>
+        <h4>Actual results from the experiment</h4>
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="stat"><div class="val g">99.9%</div><div class="lbl">Recall (GIST 1M)</div></div>
+          <div class="stat"><div class="val r">1,608</div><div class="lbl">QPS (GIST 1M)</div></div>
+          <div class="stat"><div class="val" style="color:var(--blue)">0.86s</div><div class="lbl">Build Time</div></div>
+          <div class="stat"><div class="val y">4,614 MB</div><div class="lbl">Memory</div></div>
+        </div>
+        <p style="font-size:12px;margin-top:.6rem">Used as the ground truth. Every other method is compared against this. Its recall is nearly 1.0 by definition.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Method 2 -->
+  <div style="margin:1.5rem 0;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    <div style="background:linear-gradient(90deg,rgba(181,156,247,.12),rgba(240,122,184,.06));padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="background:rgba(181,156,247,.15);color:var(--purple);font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:5px">INVERTED FILE</div>
+      <h3 style="margin:0;font-size:1.1rem">2. IndexIVFFlat — Partition and Conquer</h3>
+    </div>
+    <div class="grid2" style="padding:1.2rem 1.4rem;gap:1rem">
+      <div>
+        <h4>What it does</h4>
+        <p style="font-size:13px">Uses k-means clustering to divide all vectors into <strong style="color:var(--text)">Voronoi cells</strong> (like territories). Each vector "belongs" to its nearest cluster centroid. When searching, it only looks inside the <code>nprobe</code> closest cells — not the whole dataset.</p>
+        <div class="highlight purple" style="margin-top:.7rem">
+          <h4>Real analogy</h4>
+          <p style="font-size:13px">Finding the nearest hospital in a city divided into districts. Step 1: find which district you're in. Step 2: search only that district (and maybe a couple neighboring ones). Much faster than checking the whole country!</p>
+        </div>
+        <p style="font-size:12.5px;margin-top:.7rem"><strong style="color:var(--text)">nprobe</strong> is the key tuning knob. nprobe=1 → fastest but might miss the answer (the "edge problem"). nprobe=50 → slower but more accurate.</p>
+      </div>
+      <div>
+        <h4>Actual results (GIST 1M, nprobe=10)</h4>
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="stat"><div class="val y">70.3%</div><div class="lbl">Recall@10</div></div>
+          <div class="stat"><div class="val g">4,662</div><div class="lbl">QPS</div></div>
+          <div class="stat"><div class="val g">7.8s</div><div class="lbl">Build Time</div></div>
+          <div class="stat"><div class="val y">4,615 MB</div><div class="lbl">Memory</div></div>
+        </div>
+        <div class="highlight warn" style="margin-top:.7rem">
+          <h4>The Edge Problem</h4>
+          <p style="font-size:12px">If your query sits near the border between two cells, the true nearest neighbor might be in the adjacent cell — but you didn't search it. This is why recall is ~70% not 100%. Increasing nprobe helps.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Method 3 -->
+  <div style="margin:1.5rem 0;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    <div style="background:linear-gradient(90deg,rgba(245,200,66,.1),rgba(244,140,60,.06));padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="background:rgba(245,200,66,.15);color:var(--amber);font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:5px">QUANTIZATION</div>
+      <h3 style="margin:0;font-size:1.1rem">3. IVFPQ — IVF + Product Quantization (Memory Saver)</h3>
+    </div>
+    <div class="grid2" style="padding:1.2rem 1.4rem;gap:1rem">
+      <div>
+        <h4>What it does — two stages</h4>
+        <p style="font-size:13px"><strong style="color:var(--text)">Stage 1 (IVF):</strong> Same clustering as above — divide into Voronoi cells.<br><strong style="color:var(--text)">Stage 2 (PQ):</strong> Instead of storing full float32 vectors, compress each vector into tiny integer codes.</p>
+        <p style="font-size:13px;margin-top:.5rem">PQ works by splitting each 960-dimension vector into 8 sub-vectors of 120 dimensions each. Each sub-vector is mapped to the nearest centroid ID — just one byte. So 960 floats (3,840 bytes) becomes 8 bytes. <strong style="color:var(--green)">480× smaller!</strong></p>
+        <div class="highlight success">
+          <h4>Real analogy</h4>
+          <p style="font-size:13px">Instead of remembering a person's exact face (high-res photo = 10 MB), you describe them using 8 checkboxes: tall/short, dark hair/light hair, etc. (8 bytes). You lose some detail but can store millions of descriptions cheaply.</p>
+        </div>
+      </div>
+      <div>
+        <h4>Actual results (GIST 1M, nprobe=10)</h4>
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="stat"><div class="val r">10.1%</div><div class="lbl">Recall@10</div></div>
+          <div class="stat"><div class="val g">129,320</div><div class="lbl">QPS 🚀</div></div>
+          <div class="stat"><div class="val g">11.4s</div><div class="lbl">Build Time</div></div>
+          <div class="stat"><div class="val g">4,618 MB</div><div class="lbl">Memory</div></div>
+        </div>
+        <div class="highlight danger" style="margin-top:.7rem">
+          <h4>⚠️ The Dimensionality Problem</h4>
+          <p style="font-size:12px">On GIST-960 (high dimensions), the recall collapses to just 10%. This is the "Curse of Dimensionality" — in high-dimensional space, the compression loses critical information. This is the most dramatic finding in the paper!</p>
+        </div>
+        <p style="font-size:12px;margin-top:.6rem">On DEEP-96 (low dimensions), it performs much better: 6.4% recall but with <strong style="color:var(--green)">1.7 million QPS</strong>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Method 4 -->
+  <div style="margin:1.5rem 0;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    <div style="background:linear-gradient(90deg,rgba(240,122,184,.1),rgba(181,156,247,.06));padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="background:rgba(240,122,184,.15);color:var(--pink);font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:5px">SCALAR QUANT</div>
+      <h3 style="margin:0;font-size:1.1rem">4. IVFSQ — Simpler Compression (The Reliable Middle Ground)</h3>
+    </div>
+    <div class="grid2" style="padding:1.2rem 1.4rem;gap:1rem">
+      <div>
+        <h4>What it does</h4>
+        <p style="font-size:13px">Uses IVF clustering, but compresses vectors using Scalar Quantization (SQ): converts each 32-bit float into an 8-bit integer by mapping the full range to 256 discrete values. A fixed <strong style="color:var(--text)">4× compression</strong> ratio.</p>
+        <div class="highlight info">
+          <h4>Real analogy</h4>
+          <p style="font-size:13px">Like rounding prices to the nearest dollar. A $9.99 item becomes $10. You lose a tiny bit of precision but the compression is predictable and reliable. Much simpler than PQ.</p>
+        </div>
+      </div>
+      <div>
+        <h4>Actual results (GIST 1M, nprobe=10)</h4>
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="stat"><div class="val y">69.7%</div><div class="lbl">Recall@10</div></div>
+          <div class="stat"><div class="val g">6,064</div><div class="lbl">QPS</div></div>
+          <div class="stat"><div class="val g">15.9s</div><div class="lbl">Build Time</div></div>
+          <div class="stat"><div class="val g">4,618 MB</div><div class="lbl">Memory</div></div>
+        </div>
+        <p style="font-size:12px;margin-top:.6rem">Notice: IVFSQ achieves similar recall to IVFFlat (69.7% vs 70.3%) but uses less memory. It's the safe, predictable choice for systems that can't afford complex tuning.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Method 5 -->
+  <div style="margin:1.5rem 0;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    <div style="background:linear-gradient(90deg,rgba(56,217,185,.1),rgba(110,180,247,.06));padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="background:rgba(56,217,185,.15);color:var(--teal);font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:5px">OPTIMIZED PQ</div>
+      <h3 style="margin:0;font-size:1.1rem">5. IVFOPQ — PQ Fixed for High Dimensions (The Smart Fix)</h3>
+    </div>
+    <div class="grid2" style="padding:1.2rem 1.4rem;gap:1rem">
+      <div>
+        <h4>What it does</h4>
+        <p style="font-size:13px">IVFPQ fails in high dimensions because some dimensions carry much more information than others (unequal variance). IVFOPQ fixes this by learning an <strong style="color:var(--text)">orthogonal rotation matrix R</strong> that spreads the information evenly across all dimensions before quantizing.</p>
+        <div style="background:var(--bg3);border-radius:9px;padding:.9rem;margin-top:.6rem;font-size:12.5px">
+          <div style="color:var(--text3);margin-bottom:4px">The math:</div>
+          <div style="color:var(--teal);font-family:'DM Mono',monospace">x_rotated = x × R</div>
+          <div style="color:var(--text3);margin-top:4px">R is a learned matrix that re-balances variance across all sub-spaces, so PQ works equally well everywhere.</div>
+        </div>
+      </div>
+      <div>
+        <h4>Actual results (GIST 1M, nprobe=10)</h4>
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="stat"><div class="val y">18.7%</div><div class="lbl">Recall@10</div></div>
+          <div class="stat"><div class="val g">25,309</div><div class="lbl">QPS</div></div>
+          <div class="stat"><div class="val r">947s</div><div class="lbl">Build Time ⚠️</div></div>
+          <div class="stat"><div class="val g">4,631 MB</div><div class="lbl">Memory</div></div>
+        </div>
+        <div class="highlight success" style="margin-top:.7rem">
+          <h4>Key result: nearly 2× better than IVFPQ</h4>
+          <p style="font-size:12px">On GIST-960, OPQ gets 18.7% recall vs IVFPQ's 10.1% — almost double — with the same tiny memory footprint. But it takes 947 seconds to build (vs 11s for IVFPQ). This is the trade-off.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Method 6 -->
+  <div style="margin:1.5rem 0;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    <div style="background:linear-gradient(90deg,rgba(82,217,140,.12),rgba(56,217,185,.06));padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="background:rgba(82,217,140,.15);color:var(--green);font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:5px">GRAPH-BASED</div>
+      <h3 style="margin:0;font-size:1.1rem">6. IndexHNSWFlat — The Speed Champion (Multi-Layer Graph)</h3>
+    </div>
+    <div class="grid2" style="padding:1.2rem 1.4rem;gap:1rem">
+      <div>
+        <h4>What it does</h4>
+        <p style="font-size:13px">Builds a multi-layer graph where each node (vector) is connected to its nearest neighbors. The top layers have <strong style="color:var(--text)">long-range connections</strong> for fast global navigation. Lower layers have <strong style="color:var(--text)">dense local connections</strong> for precise search.</p>
+        <p style="font-size:13px">Search starts at the top layer, finds the rough area, then descends layer by layer to refine — like going from a world map to a city map to a street map.</p>
+        <div class="highlight success">
+          <h4>Real analogy</h4>
+          <p style="font-size:13px">GPS navigation: first find which continent, then country, then city, then street. Each layer zooms in. Much faster than checking every road in the world.</p>
+        </div>
+      </div>
+      <div>
+        <h4>Actual results (GIST 1M, efSearch=64)</h4>
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="stat"><div class="val g">83.1%</div><div class="lbl">Recall@10</div></div>
+          <div class="stat"><div class="val y">625</div><div class="lbl">QPS</div></div>
+          <div class="stat"><div class="val r">10,647s</div><div class="lbl">Build Time 🔴</div></div>
+          <div class="stat"><div class="val r">8,550 MB</div><div class="lbl">Memory 🔴</div></div>
+        </div>
+        <div class="highlight warn" style="margin-top:.7rem">
+          <h4>⚠️ The memory and build cost</h4>
+          <p style="font-size:12px">HNSW needs to store graph pointers for every node at every layer. 8.5 GB RAM for 1M GIST vectors. Build time was nearly 3 hours on GIST-960 (10,647 seconds). Not for streaming/frequent rebuild scenarios.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Method 7: LSH -->
+  <div style="margin:1.5rem 0;border:1px solid var(--border);border-radius:14px;overflow:hidden">
+    <div style="background:linear-gradient(90deg,rgba(240,107,107,.1),rgba(240,122,184,.06));padding:1.2rem 1.4rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px">
+      <div style="background:rgba(240,107,107,.15);color:var(--red);font-size:11px;font-weight:700;letter-spacing:1px;padding:4px 10px;border-radius:5px">HASHING</div>
+      <h3 style="margin:0;font-size:1.1rem">7. IndexLSH — Locality Sensitive Hashing (Fast but Weak)</h3>
+    </div>
+    <div class="grid2" style="padding:1.2rem 1.4rem;gap:1rem">
+      <div>
+        <h4>What it does</h4>
+        <p style="font-size:13px">Projects vectors into binary hash codes (strings of 0s and 1s) using random hyperplanes. Similar vectors are designed to produce similar hash codes — so you only compare vectors with matching or near-matching hashes.</p>
+        <div class="highlight danger">
+          <h4>Real analogy</h4>
+          <p style="font-size:13px">Sorting library books by the first letter of the title. Fast to find the right shelf — but similar books (e.g. "Algorithm Design" and "Algorithms Explained") might end up in different sections because hashing is lossy.</p>
+        </div>
+      </div>
+      <div>
+        <h4>Actual results (GIST 1M)</h4>
+        <div class="stat-grid" style="grid-template-columns:repeat(2,1fr)">
+          <div class="stat"><div class="val r">4.0%</div><div class="lbl">Recall@10 🔴</div></div>
+          <div class="stat"><div class="val y">55</div><div class="lbl">QPS</div></div>
+          <div class="stat"><div class="val g">10.1s</div><div class="lbl">Build Time</div></div>
+          <div class="stat"><div class="val g">4,671 MB</div><div class="lbl">Memory</div></div>
+        </div>
+        <p style="font-size:12px;margin-top:.6rem">LSH performs poorly in this experiment — only 4% recall and surprisingly low QPS. For high-dimensional dense vectors like GIST-960, LSH is not a good choice. It works better for sparse or binary data.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 4: CHART GUIDE -->
+<div class="page" id="charts">
+<section>
+  <div class="section-badge">Section 04 · Chart Guide</div>
+  <h2>Understanding Every Chart — Plain English</h2>
+  <p>The notebook generated 8 charts. Here's exactly what each one shows, how to read it, and what it means — even if you've never read a scientific chart before.</p>
+
+  <!-- Chart 1: Recall-Throughput Pareto -->
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.7rem">
+      <span style="background:rgba(181,156,247,.15);color:var(--purple);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px">Fig 1</span>
+      <span style="font-size:14px;font-weight:600">Recall-Throughput Pareto Frontier</span>
+    </div>
+    <p style="font-size:13px">This is the <strong style="color:var(--text)">most important chart</strong> in the paper. It plots every algorithm on two axes: how accurate (X) vs how fast (Y).</p>
+
+    <div class="reading-guide">
+      <h4>How to read this chart</h4>
+      <ul>
+        <li><strong>X-axis (Recall@10):</strong> How accurate. Further right = more accurate. 1.0 = perfect.</li>
+        <li><strong>Y-axis (QPS, log scale):</strong> How fast. Higher = more searches per second. The Y-axis is logarithmic — each grid line is 10× bigger, not just bigger by a fixed amount.</li>
+        <li><strong>The ideal algorithm</strong> would sit in the top-right corner (fast AND accurate). No algorithm achieves this — it's the fundamental trade-off.</li>
+        <li><strong>Solid line = GIST dataset, Dashed line = DEEP dataset.</strong> Points connected by lines show different nprobe settings for the same algorithm.</li>
+        <li><strong>"Pareto frontier"</strong> means the algorithms that aren't dominated by any other — no other algorithm is both faster AND more accurate than them.</li>
+      </ul>
+    </div>
+
+    <div class="highlight warn" style="margin-top:.8rem">
+      <h4>What you'll see: The big cluster on the left</h4>
+      <p style="font-size:13px">Most algorithms on GIST are clustered near Recall≈0.05–0.2 (left side). This shows that <strong style="color:var(--text)">high dimensionality is brutal</strong>. Even algorithms that work well on DEEP-96 collapse on GIST-960. Notice IVFPQ (green) is very fast (top of Y axis) but has terrible recall on GIST (far left on X axis). FlatL2 (pink) sits alone at Recall=1.0 on the right — perfect accuracy but lower speed.</p>
+    </div>
+
+    <!-- Interactive recreated chart -->
+    <div class="chart-wrap" style="height:360px">
+      <canvas id="paretoChart"></canvas>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#f06b6b"></span>FlatL2</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f5a623"></span>IVFFlat</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#52d98c"></span>IVFPQ</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#38d9b9"></span>IVFSQ</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#6eb4f7"></span>IVFOPQ</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#b59cf7"></span>HNSW</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f07ab8"></span>LSH</span>
+    </div>
+    <p style="font-size:11.5px;color:var(--text3)">● = GIST-960 · ✕ = DEEP-96 · Y-axis uses logarithmic scale</p>
+  </div>
+
+  <!-- Chart 2: Infrastructure Cost -->
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.7rem">
+      <span style="background:rgba(245,200,66,.15);color:var(--amber);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px">Fig 2</span>
+      <span style="font-size:14px;font-weight:600">Indexing Infrastructure Cost (Build Time vs Memory)</span>
+    </div>
+    <p style="font-size:13px">This chart asks: <em style="color:var(--text)">"How expensive is it to set up this index?"</em> It plots build time (X) vs RAM usage (Y) — both on log scales.</p>
+
+    <div class="reading-guide">
+      <h4>How to read this chart</h4>
+      <ul>
+        <li><strong>Bottom-left corner = cheap:</strong> Fast to build, uses little memory. Ideal for streaming/updatable systems.</li>
+        <li><strong>Top-right corner = expensive:</strong> Slow to build, uses lots of memory. Only justified if accuracy gain is worth it.</li>
+        <li><strong>Both axes are logarithmic</strong> — 10⁰=1s, 10¹=10s, 10²=100s, 10³=1000s (17 minutes), 10⁴=10000s (~3 hours).</li>
+        <li><strong>Circle = GIST, X = DEEP.</strong> The HNSW circle sits alone far top-right — extremely expensive on GIST.</li>
+      </ul>
+    </div>
+
+    <div class="highlight danger" style="margin-top:.8rem">
+      <h4>The HNSW outlier on GIST</h4>
+      <p style="font-size:13px">HNSW on GIST-960 took <strong style="color:var(--red)">10,647 seconds (~3 hours)</strong> to build and used <strong style="color:var(--red)">8,550 MB RAM</strong>. It sits isolated in the top-right. Meanwhile, most other algorithms cluster near the bottom-left — fast builds and modest memory. This doesn't mean HNSW is bad — it's the best for real-time search — but its infrastructure cost is prohibitive for frequent rebuilds.</p>
+    </div>
+
+    <div class="chart-wrap" style="height:320px">
+      <canvas id="infraChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 3: Build Time Scaling -->
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.7rem">
+      <span style="background:rgba(56,217,185,.15);color:var(--teal);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px">Fig 4</span>
+      <span style="font-size:14px;font-weight:600">Build Time Scalability (100K → 1M)</span>
+    </div>
+    <p style="font-size:13px">Shows how each algorithm's build time changes as the dataset grows 10× (from 100K to 1M vectors). This reveals which algorithms scale gracefully vs which have runaway growth.</p>
+
+    <div class="reading-guide">
+      <h4>How to read this chart</h4>
+      <ul>
+        <li><strong>X-axis:</strong> Dataset scale — 100K on the left, 1M on the right.</li>
+        <li><strong>Y-axis (log scale):</strong> Build time in seconds. 10⁰=1s, 10¹=10s, 10⁴=10,000s.</li>
+        <li><strong>Steep slope = bad scaling.</strong> A line going from 10 to 10,000 (steep) is worse than one going from 1 to 10 (shallow).</li>
+        <li><strong>Solid = GIST-960, Dashed = DEEP-96.</strong> The gap between them shows the dimensionality penalty.</li>
+      </ul>
+    </div>
+
+    <div class="grid2" style="margin-top:.8rem;gap:.8rem">
+      <div class="highlight success">
+        <h4>Well-scaling algorithms</h4>
+        <p style="font-size:12.5px">FlatL2, IVFFlat, IVFPQ, IVFSQ, LSH — all show near-linear (shallow slope) growth. Going 10× bigger only takes 5-10× longer to build. Expected and manageable.</p>
+      </div>
+      <div class="highlight danger">
+        <h4>HNSW's super-linear penalty</h4>
+        <p style="font-size:12.5px">HNSW on GIST goes from ~562 seconds at 100K to ~10,647 seconds at 1M — that's <strong style="color:var(--red)">19× longer</strong> for 10× more data. Building proximity links in 960-D space is computationally crippling at scale.</p>
+      </div>
+    </div>
+
+    <div class="chart-wrap" style="height:300px">
+      <canvas id="buildChart"></canvas>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#f06b6b"></span>FlatL2</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f5a623"></span>IVFFlat</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#52d98c"></span>IVFPQ</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#38d9b9"></span>IVFSQ</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#6eb4f7"></span>IVFOPQ</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#b59cf7"></span>HNSW</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f07ab8"></span>LSH</span>
+    </div>
+    <p style="font-size:11.5px;color:var(--text3)">Solid = GIST-960 · Dashed = DEEP-96</p>
+  </div>
+
+  <!-- Chart 4: Memory -->
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.7rem">
+      <span style="background:rgba(240,122,184,.15);color:var(--pink);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px">Fig 5</span>
+      <span style="font-size:14px;font-weight:600">Memory Footprint Growth Comparison</span>
+    </div>
+    <p style="font-size:13px">Shows how much RAM each algorithm uses at 100K vs 1M vectors. The Y-axis is logarithmic.</p>
+
+    <div class="reading-guide">
+      <h4>How to read this chart</h4>
+      <ul>
+        <li><strong>Blue bars = 100K vectors, Orange bars = 1M vectors.</strong> The taller the orange bar vs the blue, the worse the memory scaling.</li>
+        <li><strong>The interesting story is HNSW:</strong> At 100K it uses ~4,990 MB. At 1M it jumps to ~8,550 MB — because it needs to store graph pointers for every node at every layer.</li>
+        <li><strong>All other algorithms</strong> show barely any memory growth — because they use RSS (Resident Set Size) tracking which includes the OS baseline (~4,600 MB).</li>
+      </ul>
+    </div>
+
+    <div class="highlight warn">
+      <h4>Why most bars look the same height</h4>
+      <p style="font-size:13px">The memory measurement uses psutil RSS, which includes the entire process memory including Python, OS libraries, etc. (~4,600 MB baseline). Most index structures add only a few MB on top of this. HNSW is the clear exception — its graph structure genuinely consumes extra RAM that shows up clearly.</p>
+    </div>
+
+    <div class="chart-wrap" style="height:280px">
+      <canvas id="memChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 5: QPS Stability -->
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.7rem">
+      <span style="background:rgba(244,140,60,.15);color:var(--orange);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px">Fig 6</span>
+      <span style="font-size:14px;font-weight:600">Throughput (QPS) Stability Across Scales</span>
+    </div>
+    <p style="font-size:13px">Asks: <em style="color:var(--text)">"Does the algorithm stay fast as the dataset grows?"</em> A good algorithm maintains similar QPS whether searching 100K or 1M vectors.</p>
+
+    <div class="reading-guide">
+      <h4>How to read this chart</h4>
+      <ul>
+        <li><strong>Light bars = 100K, Dark bars = 1M.</strong> If the dark bar is much shorter than the light bar, the algorithm slows down a lot when data grows.</li>
+        <li><strong>Y-axis is logarithmic</strong> — IVFPQ's bar at 10⁶ is 1,000× taller than LSH's bar at 10³.</li>
+        <li><strong>Ideal behavior:</strong> Light and dark bars at similar height = the algorithm doesn't slow down much with more data.</li>
+      </ul>
+    </div>
+
+    <div class="grid2" style="margin-top:.8rem;gap:.8rem">
+      <div class="highlight success">
+        <h4>Scale-stable: IVFPQ, IVFOPQ</h4>
+        <p style="font-size:12.5px">IVFPQ: 543K QPS at 100K → 396K QPS at 1M (DEEP). Only 1.37× slower for 10× more data. The quantized codes allow fast approximate distance computation regardless of dataset size.</p>
+      </div>
+      <div class="highlight danger">
+        <h4>Scale-sensitive: FlatL2, LSH</h4>
+        <p style="font-size:12.5px">FlatL2 drops from 78K → 8K QPS (DEEP) — 10× slower for 10× data. Expected: it checks every vector. LSH drops from 550 → 54 QPS — also 10× slower. Both scale linearly with dataset size.</p>
+      </div>
+    </div>
+
+    <div class="chart-wrap" style="height:300px">
+      <canvas id="qpsChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 6: Radar Charts -->
+  <div class="chart-box" style="margin-bottom:1.5rem">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:.7rem">
+      <span style="background:rgba(129,140,248,.15);color:var(--indigo);font-size:11px;font-weight:700;padding:3px 9px;border-radius:5px">Figs 7–8</span>
+      <span style="font-size:14px;font-weight:600">Multi-Objective Radar Charts (Architectural Trade-off)</span>
+    </div>
+    <p style="font-size:13px">These "spider web" charts show each algorithm's performance across 4 metrics simultaneously: Recall, QPS speed, Memory efficiency, and Build efficiency. A larger polygon = better overall performance.</p>
+
+    <div class="reading-guide">
+      <h4>How to read a radar chart</h4>
+      <ul>
+        <li><strong>4 axes, each normalized 0–1:</strong> Recall@10, QPS_Log (speed), Mem_Eff (higher = less memory used), Build_Spd (higher = faster build).</li>
+        <li><strong>Bigger polygon = better algorithm</strong> overall. But a polygon that's big in some directions and small in others reveals specialization.</li>
+        <li><strong>DEEP radar:</strong> Most algorithms form similar triangular shapes — pointing toward QPS and Build_Spd but weak on Recall. This is because DEEP-96 is "easy" and most algorithms sacrifice recall for speed.</li>
+        <li><strong>GIST radar:</strong> Profiles diverge dramatically. FlatL2 pokes far right (high recall). IVFPQ/IVFOPQ poke far up (high QPS). HNSW is stuck in the middle — decent recall but terrible build efficiency and memory.</li>
+      </ul>
+    </div>
+
+    <div class="grid2" style="margin-top:.8rem;gap:.8rem">
+      <div class="highlight info">
+        <h4>DEEP-96 radar — shapes are similar</h4>
+        <p style="font-size:12.5px">On the simpler 96-D dataset, most algorithms perform comparably. The profiles look like similar-sized triangles. IVFPQ dominates QPS. HNSW has the worst build efficiency. Recall is uniformly low because the data augmentation (noise tiling) makes the ground-truth neighbors harder to recover.</p>
+      </div>
+      <div class="highlight warn">
+        <h4>GIST-1M radar — profiles polarize</h4>
+        <p style="font-size:12.5px">The high-dimensional GIST dataset forces specialization. FlatL2 becomes the "accuracy specialist" (right spike). IVFPQ becomes the "speed specialist" (top spike). No algorithm achieves all four metrics simultaneously — the radar proves there's no free lunch.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 5: LIVE DATA -->
+<div class="page" id="data">
+<section>
+  <div class="section-badge">Section 05 · Real Numbers</div>
+  <h2>Live Data from the Experiment</h2>
+  <p>Every number here comes directly from <code>benchmark_results.csv</code> — the actual output of running the notebook. No estimates.</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('gist1m')">GIST-960 · 1M vectors</button>
+    <button class="tab" onclick="showTab('deep1m')">DEEP-96 · 1M vectors</button>
+    <button class="tab" onclick="showTab('scaling')">Scaling factors</button>
+  </div>
+
+  <div id="gist1m" class="tab-content active">
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Recall@10</th><th>QPS</th><th>Build Time</th><th>Memory</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600;color:var(--blue)">FlatL2</td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">99.9%</span></td>
+          <td>1,608</td><td>0.86s</td><td>4,614 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Gold standard. Slow at scale.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--purple)">IVFFlat</td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">70.3%</span></td>
+          <td>4,662</td><td>7.8s</td><td>4,615 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Good balance. Default choice.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--green)">IVFPQ</td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">10.1%</span></td>
+          <td style="color:var(--green);font-weight:600">129,320</td><td>11.4s</td><td>4,618 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Fastest! But recall collapses in high-D.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--pink)">IVFSQ</td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">69.7%</span></td>
+          <td>6,064</td><td>15.9s</td><td>4,618 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Reliable middle ground.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--teal)">IVFOPQ</td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">18.7%</span></td>
+          <td>25,309</td><td style="color:var(--red)">947s</td><td>4,631 MB</td>
+          <td style="font-size:12px;color:var(--text3)">2× better than IVFPQ on GIST. Slow build.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--indigo)">HNSW</td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">83.1%</span></td>
+          <td>625</td><td style="color:var(--red)">10,647s</td><td style="color:var(--red)">8,550 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Best recall of ANN methods. Expensive.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--red)">LSH</td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">4.0%</span></td>
+          <td>55</td><td>10.1s</td><td>4,671 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Poor on dense high-D vectors.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="deep1m" class="tab-content">
+    <table class="data-table">
+      <thead><tr><th>Method</th><th>Recall@10</th><th>QPS</th><th>Build Time</th><th>Memory</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:600;color:var(--blue)">FlatL2</td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">10.0%</span></td>
+          <td>8,329</td><td>0.09s</td><td>4,626 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Low recall — DEEP ground truth uses angular distance, we use L2.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--purple)">IVFFlat</td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">9.3%</span></td>
+          <td>57,615</td><td>1.2s</td><td>4,626 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Fast and cheap to build.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--green)">IVFPQ</td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">6.4%</span></td>
+          <td style="color:var(--green);font-weight:600">396,406</td><td>2.1s</td><td>4,649 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Extremely fast on 96-D data.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--pink)">IVFSQ</td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">9.3%</span></td>
+          <td>73,585</td><td>1.9s</td><td>4,649 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Similar to IVFFlat, expected.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--teal)">IVFOPQ</td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">6.9%</span></td>
+          <td>232,720</td><td style="color:var(--orange)">271s</td><td>4,629 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Fast inference, slow build.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--indigo)">HNSW</td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">9.8%</span></td>
+          <td>2,192</td><td>339s</td><td>5,248 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Good recall but slow QPS on DEEP.</td>
+        </tr>
+        <tr>
+          <td style="font-weight:600;color:var(--red)">LSH</td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">6.7%</span></td>
+          <td>54</td><td>1.7s</td><td>4,657 MB</td>
+          <td style="font-size:12px;color:var(--text3)">Terrible QPS. Not recommended.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="highlight info" style="margin-top:.8rem">
+      <h4>Why is recall so low on DEEP even for FlatL2?</h4>
+      <p style="font-size:13px">The DEEP-96 dataset uses angular (cosine) distance for its ground truth neighbors, but the experiment uses L2 (Euclidean) distance for search. Even though we normalize the vectors, the two metrics can return different "nearest neighbors". That's why FlatL2 only achieves ~10% recall on DEEP — it's finding the correct L2 neighbors, not the ground truth angular neighbors.</p>
+    </div>
+  </div>
+
+  <div id="scaling" class="tab-content">
+    <table class="data-table">
+      <thead><tr><th>Dataset</th><th>Method</th><th>Build Penalty (100K→1M)</th><th>Memory Growth</th><th>QPS Retention</th></tr></thead>
+      <tbody>
+        <tr><td>GIST</td><td style="color:var(--indigo);font-weight:600">HNSW</td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">18.9× slower</span></td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">+71% RAM</span></td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">61%</span></td></tr>
+        <tr><td>GIST</td><td style="color:var(--teal);font-weight:600">IVFOPQ</td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">1.3× slower</span></td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">+0.2% RAM</span></td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">97%</span></td></tr>
+        <tr><td>GIST</td><td style="color:var(--green);font-weight:600">IVFPQ</td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">1.8× slower</span></td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">+1.5% RAM</span></td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">271% 🚀</span></td></tr>
+        <tr><td>GIST</td><td style="color:var(--purple);font-weight:600">IVFFlat</td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">4.5× slower</span></td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">+2.7% RAM</span></td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">35%</span></td></tr>
+        <tr><td>DEEP</td><td style="color:var(--indigo);font-weight:600">HNSW</td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">33× slower</span></td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">+13% RAM</span></td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">52%</span></td></tr>
+        <tr><td>DEEP</td><td style="color:var(--green);font-weight:600">IVFPQ</td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">2.2× slower</span></td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">+0.0% RAM</span></td>
+          <td><span class="pill" style="background:rgba(245,200,66,.1);color:var(--amber)">74%</span></td></tr>
+        <tr><td>DEEP</td><td style="color:var(--blue);font-weight:600">FlatL2</td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">10× slower</span></td>
+          <td><span class="pill" style="background:rgba(82,217,140,.1);color:var(--green)">-0.2% RAM</span></td>
+          <td><span class="pill" style="background:rgba(240,107,107,.1);color:var(--red)">11%</span></td></tr>
+      </tbody>
+    </table>
+    <div class="highlight purple" style="margin-top:.8rem">
+      <h4>Interesting finding: IVFPQ on GIST gets FASTER at 1M!</h4>
+      <p style="font-size:13px">QPS Retention of 271% means IVFPQ was actually 2.7× faster at 1M than at 100K on GIST. This happens because at larger scale, nlist=sqrt(N) is larger, so each cluster is smaller and the compressed-code search becomes more cache-friendly. The GPU vectorization also kicks in more effectively at higher batch sizes.</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 6: WHEN TO USE -->
+<div class="page" id="scenarios">
+<section>
+  <div class="section-badge">Section 06 · Decision Guide</div>
+  <h2>When to Use Which Algorithm</h2>
+  <p>Use this guide to pick the right index for your situation.</p>
+
+  <div style="background:var(--bg3);border-radius:14px;padding:1.4rem;border:1px solid var(--border);margin-bottom:1.5rem">
+    <h3 style="margin-bottom:1rem">Interactive Selector — What's your situation?</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-bottom:1rem">
+      <div>
+        <label style="font-size:11.5px;color:var(--text3);display:block;margin-bottom:4px;font-weight:600">PRIORITY</label>
+        <select id="sel-priority" onchange="updateRec()" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-family:'DM Sans',sans-serif;font-size:13px">
+          <option value="accuracy">Max accuracy (correctness matters most)</option>
+          <option value="speed">Max speed (latency matters most)</option>
+          <option value="memory">Min memory (RAM is limited)</option>
+          <option value="balance">Balanced (good enough on all)</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11.5px;color:var(--text3);display:block;margin-bottom:4px;font-weight:600">DATASET SIZE</label>
+        <select id="sel-size" onchange="updateRec()" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-family:'DM Sans',sans-serif;font-size:13px">
+          <option value="small">Small — under 10,000 vectors</option>
+          <option value="medium" selected>Medium — 10K to 1M vectors</option>
+          <option value="large">Large — over 1 million vectors</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11.5px;color:var(--text3);display:block;margin-bottom:4px;font-weight:600">DIMENSIONS</label>
+        <select id="sel-dims" onchange="updateRec()" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-family:'DM Sans',sans-serif;font-size:13px">
+          <option value="low">Low — under 128 dimensions</option>
+          <option value="high" selected>High — 128+ dimensions</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:11.5px;color:var(--text3);display:block;margin-bottom:4px;font-weight:600">REBUILD FREQUENCY</label>
+        <select id="sel-rebuild" onchange="updateRec()" style="width:100%;background:var(--bg);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px;font-family:'DM Sans',sans-serif;font-size:13px">
+          <option value="rare">Rarely (build once, search forever)</option>
+          <option value="frequent">Frequently (streaming / live updates)</option>
+        </select>
+      </div>
+    </div>
+    <div id="rec-box" style="background:var(--bg);border-radius:10px;padding:1.1rem;border:1px solid var(--border2)">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:5px;font-weight:700;letter-spacing:1px;text-transform:uppercase">Recommendation</div>
+      <div id="rec-name" style="font-size:1.3rem;font-weight:700;color:var(--teal);margin-bottom:4px">IVFOPQ</div>
+      <div id="rec-why" style="font-size:13px;color:var(--text2)">Loading…</div>
+    </div>
+  </div>
+
+  <!-- Scenario table -->
+  <table class="data-table">
+    <thead><tr><th>Real-World Use Case</th><th>Best Method</th><th>Why</th><th>Watch out for</th></tr></thead>
+    <tbody>
+      <tr>
+        <td style="color:var(--text)">ChatGPT-style RAG memory retrieval</td>
+        <td style="color:var(--indigo);font-weight:600">HNSW</td>
+        <td style="font-size:12px">Needs millisecond latency + high recall. Users notice wrong answers.</td>
+        <td style="font-size:12px">Needs lots of RAM. Slow to rebuild.</td>
+      </tr>
+      <tr>
+        <td style="color:var(--text)">Netflix/Spotify recommendation system</td>
+        <td style="color:var(--purple);font-weight:600">IVFFlat</td>
+        <td style="font-size:12px">70% recall is fine — users won't notice if it's the 5th vs 1st most relevant. Great speed.</td>
+        <td style="font-size:12px">Edge problem at cluster boundaries.</td>
+      </tr>
+      <tr>
+        <td style="color:var(--text)">Billion-scale image search (Instagram, Google Photos)</td>
+        <td style="color:var(--amber);font-weight:600">IVFPQ or IVFOPQ</td>
+        <td style="font-size:12px">64× memory compression. 1M vectors in ~8 MB. Can keep all embeddings in cache.</td>
+        <td style="font-size:12px">Low recall on high-D. Use OPQ for high dimensions.</td>
+      </tr>
+      <tr>
+        <td style="color:var(--text)">Medical diagnosis / fingerprint ID (100% accuracy needed)</td>
+        <td style="color:var(--blue);font-weight:600">FlatL2</td>
+        <td style="font-size:12px">Only method that guarantees finding the true nearest neighbor. No approximation acceptable.</td>
+        <td style="font-size:12px">Very slow on large datasets. Use only when dataset is small (&lt;50K).</td>
+      </tr>
+      <tr>
+        <td style="color:var(--text)">Real-time fraud detection (new transactions stream in constantly)</td>
+        <td style="color:var(--purple);font-weight:600">IVFFlat or IVFPQ</td>
+        <td style="font-size:12px">Fast to rebuild (seconds). IVF architectures handle streaming data well.</td>
+        <td style="font-size:12px">Avoid HNSW — rebuilding after each new transaction takes too long.</td>
+      </tr>
+      <tr>
+        <td style="color:var(--text)">LLM embeddings (1536-D like OpenAI's text-embedding-3)</td>
+        <td style="color:var(--teal);font-weight:600">IVFOPQ</td>
+        <td style="font-size:12px">At 1536 dimensions, standard PQ collapses even worse than on GIST-960. OPQ's rotation is mandatory.</td>
+        <td style="font-size:12px">Slow build. Plan for build time in deployment schedule.</td>
+      </tr>
+      <tr>
+        <td style="color:var(--text)">Rough text search prototype / low stakes</td>
+        <td style="color:var(--pink);font-weight:600">IVFSQ</td>
+        <td style="font-size:12px">Simple to set up, predictable 4× compression, reliable ~70% recall. No deep tuning needed.</td>
+        <td style="font-size:12px">Not the best at anything in particular — just reliable.</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+</div>
+
+<div class="divider"></div>
+
+<!-- ═══════════════════════════════════════════════════════ SECTION 7: PAPER ANALYSIS -->
+<div class="page" id="paper">
+<section>
+  <div class="section-badge">Section 07 · Research Paper</div>
+  <h2>Deep Dive: The Research Paper Analysis</h2>
+  <p>The paper "Dimensionality and Scalability in Approximate Nearest Neighbor Search: A 9-Method FAISS Benchmark" makes 6 major empirical findings. Here's what each one means and why it matters.</p>
+
+  <div style="display:flex;flex-direction:column;gap:1.2rem;margin-top:1.5rem">
+
+    <!-- Finding 1 -->
+    <div class="card" style="border-left:3px solid var(--green)">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="background:rgba(82,217,140,.12);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem">🏆</div>
+        <div>
+          <h3 style="color:var(--green)">Finding 1: HNSW defines the upper boundary of accuracy-speed trade-off</h3>
+          <p style="font-size:13px">On the GIST-960 dataset, HNSW achieves <strong style="color:var(--text)">83.1% Recall@10</strong> with <strong style="color:var(--text)">625 QPS</strong>. No other algorithm gets above 83% recall while remaining faster than brute-force. This makes HNSW the "benchmark king" — but it comes at severe cost. On GIST-1M: 10,647 seconds to build and 8,550 MB RAM.</p>
+          <div class="highlight success" style="margin-top:.6rem">
+            <h4>What this means for you</h4>
+            <p style="font-size:12.5px">If you're building a production AI system and you have money for server RAM, HNSW is the right choice for user-facing search (semantic search, RAG). If you're building on a budget or with streaming data, look at the quantization methods instead.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finding 2 -->
+    <div class="card" style="border-left:3px solid var(--red)">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="background:rgba(240,107,107,.12);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem">💥</div>
+        <div>
+          <h3 style="color:var(--red)">Finding 2: The "Curse of Dimensionality" destroys standard IVFPQ on GIST</h3>
+          <p style="font-size:13px">This is the most dramatic finding. Standard IVFPQ achieves only <strong style="color:var(--red)">10.1% Recall@10</strong> on GIST-960 at 1M scale. Why? Because in 960 dimensions, information is distributed unevenly — some dimensions carry enormous variance while others carry almost none. When PQ splits the vector into 8 equal sub-spaces, it forces equal importance on unequal parts. The result: catastrophic compression loss.</p>
+          <div class="grid2" style="margin-top:.7rem;gap:.7rem">
+            <div class="highlight danger">
+              <h4>GIST-960 (high-D) — collapse</h4>
+              <p style="font-size:12px">IVFPQ recall: <strong style="color:var(--red)">10.1%</strong>. The compression throws away most of the signal.</p>
+            </div>
+            <div class="highlight info">
+              <h4>DEEP-96 (low-D) — works fine</h4>
+              <p style="font-size:12px">IVFPQ recall: <strong style="color:var(--blue)">6.4%</strong> (low recall here is a metric mismatch, not compression failure).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finding 3 -->
+    <div class="card" style="border-left:3px solid var(--amber)">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="background:rgba(245,200,66,.12);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem">🔑</div>
+        <div>
+          <h3 style="color:var(--amber)">Finding 3: IVFOPQ partially recovers from dimensionality collapse — nearly 2×</h3>
+          <p style="font-size:13px">By applying a learned rotation matrix R before quantization, IVFOPQ achieves <strong style="color:var(--text)">18.7% recall</strong> on GIST-1M vs IVFPQ's 10.1% — almost double — while using essentially the same ~4,631 MB of memory. This proves that the PQ failure was due to unequal variance, not an inherent limitation of quantization.</p>
+          <div class="highlight warn" style="margin-top:.6rem">
+            <h4>The trade-off: build time</h4>
+            <p style="font-size:12.5px">IVFOPQ took 947 seconds (16 minutes) to build on GIST-1M vs 11 seconds for IVFPQ. The rotation matrix learning is computationally expensive. But for a one-time index build on a system that searches billions of times afterward, this is an excellent trade-off.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finding 4 -->
+    <div class="card" style="border-left:3px solid var(--blue)">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="background:rgba(110,180,247,.12);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem">📈</div>
+        <div>
+          <h3 style="color:var(--blue)">Finding 4: HNSW scales super-linearly on GIST — a deployment blocker</h3>
+          <p style="font-size:13px">Going from 100K to 1M vectors (10× growth) should ideally take 10× longer to build. HNSW on GIST-960 took <strong style="color:var(--text)">18.9× longer</strong> — super-linear. In contrast, IVFFlat took 4.5× longer (sub-linear). IVFOPQ took only 1.3× longer (nearly constant).</p>
+          <p style="font-size:13px;margin-top:.5rem">The cause: building proximity links in 960-D space requires comparing each new vector to many potential neighbors. In high dimensions, finding these neighbors is computationally hard because of distance concentration — all points tend to be at similar distances from each other, making it hard to identify true neighbors efficiently.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finding 5 -->
+    <div class="card" style="border-left:3px solid var(--teal)">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="background:rgba(56,217,185,.12);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem">⚖️</div>
+        <div>
+          <h3 style="color:var(--teal)">Finding 5: IVFPQ and HNSW occupy opposite deployment poles</h3>
+          <p style="font-size:13px">These two algorithms represent the extreme ends of a deployment spectrum:</p>
+          <div class="grid2" style="margin-top:.7rem;gap:.7rem">
+            <div style="background:var(--bg3);border-radius:9px;padding:.9rem">
+              <div style="font-weight:700;color:var(--green);font-size:13px;margin-bottom:.5rem">IVFPQ — Resource Minimalist</div>
+              <ul style="font-size:12px;color:var(--text2);padding-left:1rem;line-height:1.8">
+                <li>Memory: ~4,618 MB (no extra)</li>
+                <li>Build: 11 seconds</li>
+                <li>QPS: 129,320</li>
+                <li>Recall: 10.1% on GIST</li>
+                <li>Best for: memory-constrained, fast QPS</li>
+              </ul>
+            </div>
+            <div style="background:var(--bg3);border-radius:9px;padding:.9rem">
+              <div style="font-weight:700;color:var(--indigo);font-size:13px;margin-bottom:.5rem">HNSW — Performance Maximalist</div>
+              <ul style="font-size:12px;color:var(--text2);padding-left:1rem;line-height:1.8">
+                <li>Memory: 8,550 MB (+85% extra)</li>
+                <li>Build: 10,647 seconds</li>
+                <li>QPS: 625</li>
+                <li>Recall: 83.1% on GIST</li>
+                <li>Best for: high accuracy, premium infra</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finding 6 -->
+    <div class="card" style="border-left:3px solid var(--pink)">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <div style="background:rgba(240,122,184,.12);border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.2rem">🧩</div>
+        <div>
+          <h3 style="color:var(--pink)">Finding 6: The radar charts reveal algorithm "specialization" under stress</h3>
+          <p style="font-size:13px">On DEEP-96, the radar chart shows balanced polygons — most algorithms perform reasonably across all 4 metrics. But on GIST-1M, the profiles "polarize": IVFPQ becomes a pure speed specialist (massive QPS, terrible recall), FlatL2 becomes a pure accuracy specialist (perfect recall, no speed), and HNSW sits in an uncomfortable middle — good recall, but terrible build and memory efficiency. The data proves there is <strong style="color:var(--text)">no free lunch</strong> in high-dimensional similarity search.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Methodology -->
+  <div style="margin-top:2rem">
+    <h3 style="margin-bottom:1rem">Methodology: Strengths & Limitations</h3>
+    <div class="grid2" style="gap:1rem">
+      <div class="card" style="border-color:rgba(82,217,140,.2)">
+        <h4 style="color:var(--green);margin-bottom:.8rem">✅ Strengths</h4>
+        <ul style="font-size:13px;color:var(--text2);padding-left:1.1rem;line-height:1.9">
+          <li>9 architectures — most comprehensive FAISS comparison in student research</li>
+          <li>Two structurally different datasets (validates generalizability)</li>
+          <li>Two scales (100K and 1M) — captures scaling behavior</li>
+          <li>5 metrics — multi-dimensional view, not just accuracy</li>
+          <li>GPU-accelerated on NVIDIA T4 — realistic production conditions</li>
+          <li>psutil RSS tracking — honest system memory measurement</li>
+          <li>Gaussian noise augmentation — scientifically sound scaling approach</li>
+          <li>Multiple nprobe settings for IVF methods — shows the tuning landscape</li>
+        </ul>
+      </div>
+      <div class="card" style="border-color:rgba(240,107,107,.2)">
+        <h4 style="color:var(--red);margin-bottom:.8rem">⚠️ Limitations</h4>
+        <ul style="font-size:13px;color:var(--text2);padding-left:1.1rem;line-height:1.9">
+          <li>Data augmentation (noise tiling) is synthetic — real 1M distributions have richer structure</li>
+          <li>Google Colab has variable GPU allocation — build times may not be perfectly reproducible</li>
+          <li>Fixed nprobe=10 for most experiments — different settings might change method rankings</li>
+          <li>Only two datasets — adding SIFT-1B or Glove would strengthen claims</li>
+          <li>HNSW hyperparameters (M=32, efSearch=64) — different M could change QPS/recall balance</li>
+          <li>Memory measurement includes OS baseline (~4,600 MB) — makes small differences invisible</li>
+          <li>DEEP-96 metric mismatch (angular GT vs L2 search) creates misleading recall numbers</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Production guidelines -->
+  <div style="margin-top:2rem">
+    <h3 style="margin-bottom:1rem">Evidence-Based Production Guidelines</h3>
+    <div class="grid3" style="gap:.9rem">
+      <div style="background:var(--bg3);border-radius:11px;padding:1.1rem;border:1px solid rgba(82,217,140,.2)">
+        <div style="color:var(--green);font-size:13px;font-weight:700;margin-bottom:.5rem">⚡ Latency-Critical</div>
+        <div style="color:var(--text);font-size:14px;font-weight:600;margin-bottom:.4rem">HNSW</div>
+        <p style="font-size:12.5px">For semantic search, LLM RAG, real-time recommendations where millisecond responses matter. Verified: 625 QPS at 83% recall on 1M GIST vectors. Plan for 8.5 GB RAM per million vectors.</p>
+      </div>
+      <div style="background:var(--bg3);border-radius:11px;padding:1.1rem;border:1px solid rgba(245,200,66,.2)">
+        <div style="color:var(--amber);font-size:13px;font-weight:700;margin-bottom:.5rem">💾 Memory-Constrained</div>
+        <div style="color:var(--text);font-size:14px;font-weight:600;margin-bottom:.4rem">IVFPQ or IVFOPQ</div>
+        <p style="font-size:12.5px">For billion-scale archives, edge deployment, or when RAM is limited. IVFOPQ doubles IVFPQ's recall (18.7% vs 10.1%) on high-D data with nearly the same memory footprint — 947s build is worth it.</p>
+      </div>
+      <div style="background:var(--bg3);border-radius:11px;padding:1.1rem;border:1px solid rgba(181,156,247,.2)">
+        <div style="color:var(--purple);font-size:13px;font-weight:700;margin-bottom:.5rem">🎯 High-Dimensional</div>
+        <div style="color:var(--text);font-size:14px;font-weight:600;margin-bottom:.4rem">IVFOPQ mandatory</div>
+        <p style="font-size:12.5px">For modern LLM embeddings (512-D, 1536-D, 3072-D), standard PQ is mathematically broken. The orthogonal rotation learned by OPQ is the only way to prevent recall collapse without switching to HNSW.</p>
+      </div>
+    </div>
+  </div>
+</section>
+</div>
+
+<div style="text-align:center;padding:2.5rem 1.5rem;color:var(--text3);font-size:12.5px;border-top:1px solid var(--border)">
+  <p>CSE488 Big Data Analytics · East West University · FAISS Visual Learning Guide</p>
+  <p style="margin-top:4px">All benchmark data from CSE488_FAISS_Assignment_V1.ipynb · benchmark_results.csv · scaling_comparison_table.csv</p>
+</div>
+
+<script>
+// ─────── CHART 1: PARETO (Recall vs QPS) ───────
+const paretoData = [
+  // [Recall@10, QPS, label, color, marker] — GIST 1M
+  [0.9991, 1608,  'FlatL2',  '#f06b6b', 'circle'],
+  [0.7029, 4662,  'IVFFlat', '#f5a623', 'circle'],
+  [0.1011, 129319,'IVFPQ',   '#52d98c', 'circle'],
+  [0.6974, 6064,  'IVFSQ',   '#38d9b9', 'circle'],
+  [0.1871, 25309, 'IVFOPQ',  '#6eb4f7', 'circle'],
+  [0.8305, 625,   'HNSW',    '#b59cf7', 'circle'],
+  [0.0398, 55,    'LSH',     '#f07ab8', 'circle'],
+  // DEEP 1M
+  [0.0998, 8329,  'FlatL2',  '#f06b6b', 'cross'],
+  [0.0930, 57615, 'IVFFlat', '#f5a623', 'cross'],
+  [0.0643, 396406,'IVFPQ',   '#52d98c', 'cross'],
+  [0.0930, 73585, 'IVFSQ',   '#38d9b9', 'cross'],
+  [0.0686, 232720,'IVFOPQ',  '#6eb4f7', 'cross'],
+  [0.0985, 2192,  'HNSW',    '#b59cf7', 'cross'],
+  [0.0665, 54,    'LSH',     '#f07ab8', 'cross'],
+];
+const paretoCtx = document.getElementById('paretoChart').getContext('2d');
+new Chart(paretoCtx, {
+  type: 'scatter',
+  data: {
+    datasets: paretoData.map(d => ({
+      label: d[2] + (d[4]==='cross'?' (DEEP)':' (GIST)'),
+      data: [{x: d[0], y: d[1]}],
+      backgroundColor: d[3] + 'cc',
+      borderColor: d[3],
+      borderWidth: 1.5,
+      pointStyle: d[4]==='cross' ? 'crossRot' : 'circle',
+      pointRadius: 8,
+      pointHoverRadius: 10,
+    }))
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    scales: {
+      x: { title: {display:true, text:'Recall@10 (Accuracy)', color:'#8b90a8', font:{size:11}}, min:0, max:1.05,
+        grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b90a8',font:{size:10}} },
+      y: { type:'logarithmic', title:{display:true,text:'QPS (log scale)',color:'#8b90a8',font:{size:11}},
+        grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b90a8',font:{size:10},
+          callback: v => v>=1000000?v/1000000+'M':v>=1000?v/1000+'K':v } }
+    },
+    plugins: { legend:{display:false}, tooltip:{
+      backgroundColor:'#13151c', borderColor:'rgba(255,255,255,0.1)', borderWidth:1,
+      callbacks:{label: ctx => ` Recall: ${ctx.parsed.x.toFixed(3)}  QPS: ${Math.round(ctx.parsed.y).toLocaleString()}`}
+    }}
+  }
+});
+
+// ─────── CHART 2: INFRASTRUCTURE COST ───────
+const infraCtx = document.getElementById('infraChart').getContext('2d');
+const infraGIST = [
+  {x:0.86, y:4614, label:'FlatL2', color:'#f06b6b'},
+  {x:7.79, y:4615, label:'IVFFlat', color:'#f5a623'},
+  {x:11.43, y:4618, label:'IVFPQ', color:'52d98c'},
+  {x:15.91, y:4618, label:'IVFSQ', color:'#38d9b9'},
+  {x:947.6, y:4631, label:'IVFOPQ', color:'#6eb4f7'},
+  {x:10647, y:8550, label:'HNSW', color:'#b59cf7'},
+  {x:10.11, y:4671, label:'LSH', color:'#f07ab8'},
+];
+new Chart(infraCtx, {
+  type:'scatter',
+  data:{datasets: infraGIST.map(d=>({
+    label: d.label+' (GIST)',
+    data:[{x:d.x,y:d.y}],
+    backgroundColor: d.color+'99', borderColor: d.color,
+    borderWidth:1.5, pointRadius:10, pointHoverRadius:12,
+  }))},
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      x:{type:'logarithmic', title:{display:true,text:'Build Time (seconds, log)',color:'#8b90a8',font:{size:11}},
+        grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b90a8',font:{size:10},
+          callback: v=>[0.1,1,10,100,1000,10000].includes(v)?v+'s':''}},
+      y:{title:{display:true,text:'Memory (MB)',color:'#8b90a8',font:{size:11}},
+        min:4400, max:9000, grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b90a8',font:{size:10}}}
+    },
+    plugins:{legend:{display:false}, tooltip:{
+      backgroundColor:'#13151c', borderColor:'rgba(255,255,255,0.1)', borderWidth:1,
+      callbacks:{label: ctx=>{const d=infraGIST[ctx.datasetIndex]; return ` ${d.label} — Build: ${d.x}s  Mem: ${d.y}MB`}}
+    }}
+  }
+});
+
+// ─────── CHART 3: BUILD TIME SCALING ───────
+const buildCtx = document.getElementById('buildChart').getContext('2d');
+const buildData = [
+  {label:'FlatL2', gist:[0.104,0.858], deep:[0.009,0.094], color:'#f06b6b'},
+  {label:'IVFFlat', gist:[1.72,7.79], deep:[0.20,1.20], color:'#f5a623'},
+  {label:'IVFPQ', gist:[6.24,11.43], deep:[0.93,2.06], color:'#52d98c'},
+  {label:'IVFSQ', gist:[2.30,15.91], deep:[0.23,1.95], color:'#38d9b9'},
+  {label:'IVFOPQ', gist:[743,947.6], deep:[227,271], color:'#6eb4f7'},
+  {label:'HNSW', gist:[562.6,10647], deep:[10.26,339], color:'#b59cf7'},
+  {label:'LSH', gist:[0.91,10.11], deep:[0.27,1.71], color:'#f07ab8'},
+];
+new Chart(buildCtx,{
+  type:'line',
+  data:{
+    labels:['100K','1M'],
+    datasets: [
+      ...buildData.map(d=>({
+        label:d.label+' GIST', data:d.gist, borderColor:d.color,
+        backgroundColor:'transparent', borderWidth:2, pointRadius:5,
+        pointBackgroundColor:d.color, tension:0
+      })),
+      ...buildData.map(d=>({
+        label:d.label+' DEEP', data:d.deep, borderColor:d.color,
+        backgroundColor:'transparent', borderWidth:1.5, borderDash:[5,4], pointRadius:4,
+        pointBackgroundColor:d.color, tension:0
+      }))
+    ]
+  },
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      y:{type:'logarithmic', title:{display:true,text:'Build Time (seconds)',color:'#8b90a8',font:{size:11}},
+        grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b90a8',font:{size:10},
+          callback:v=>[0.01,0.1,1,10,100,1000,10000].includes(v)?v+'s':''}},
+      x:{grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b90a8',font:{size:11}}}
+    },
+    plugins:{legend:{display:false}}
+  }
+});
+
+// ─────── CHART 4: MEMORY ───────
+const memCtx = document.getElementById('memChart').getContext('2d');
+const memMethods = ['FlatL2','IVFFlat','IVFPQ','IVFSQ','IVFOPQ','HNSW','LSH'];
+const mem100k = [4446,4492,4548,4550,4624,4991,4625];
+const mem1M =   [4614,4615,4618,4618,4631,8550,4671];
+new Chart(memCtx,{
+  type:'bar',
+  data:{labels:memMethods, datasets:[
+    {label:'100K',data:mem100k,backgroundColor:'rgba(110,180,247,0.45)',borderColor:'#6eb4f7',borderWidth:1},
+    {label:'1M',data:mem1M,backgroundColor:'rgba(181,156,247,0.55)',borderColor:'#b59cf7',borderWidth:1}
+  ]},
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      y:{title:{display:true,text:'Memory (MB)',color:'#8b90a8',font:{size:11}}, min:4000, max:9000,
+        grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b90a8',font:{size:10}}},
+      x:{grid:{display:false}, ticks:{color:'#8b90a8',font:{size:11}}}
+    },
+    plugins:{legend:{labels:{color:'#8b90a8',font:{size:11},boxWidth:10}},
+      tooltip:{backgroundColor:'#13151c',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+        callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.parsed.y} MB`}}}
+  }
+});
+
+// ─────── CHART 5: QPS SCALING ───────
+const qpsCtx = document.getElementById('qpsChart').getContext('2d');
+const qpsMethods2 = ['FlatL2','IVFFlat','IVFPQ','IVFSQ','IVFOPQ','HNSW','LSH'];
+const qps100k = [78941,191270,543451,368862,314011,4180,550];
+const qps1M =   [8329,57615,396406,73585,232720,2192,54];
+new Chart(qpsCtx,{
+  type:'bar',
+  data:{labels:qpsMethods2, datasets:[
+    {label:'100K',data:qps100k,backgroundColor:'rgba(245,200,66,0.45)',borderColor:'#f5c842',borderWidth:1},
+    {label:'1M',data:qps1M,backgroundColor:'rgba(244,140,60,0.55)',borderColor:'#f48c3c',borderWidth:1}
+  ]},
+  options:{
+    responsive:true, maintainAspectRatio:false,
+    scales:{
+      y:{type:'logarithmic', title:{display:true,text:'QPS (log scale)',color:'#8b90a8',font:{size:11}},
+        grid:{color:'rgba(255,255,255,0.05)'}, ticks:{color:'#8b90a8',font:{size:10},
+          callback:v=>v>=1000000?v/1000000+'M':v>=1000?v/1000+'K':v}},
+      x:{grid:{display:false}, ticks:{color:'#8b90a8',font:{size:10}}}
+    },
+    plugins:{legend:{labels:{color:'#8b90a8',font:{size:11},boxWidth:10}},
+      tooltip:{backgroundColor:'#13151c',borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+        callbacks:{label:ctx=>`${ctx.dataset.label}: ${Math.round(ctx.parsed.y).toLocaleString()} QPS`}}}
+  }
+});
+
+// ─────── TABS ───────
+function showTab(id){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─────── RECOMMENDATION ENGINE ───────
+function updateRec(){
+  const priority = document.getElementById('sel-priority').value;
+  const size = document.getElementById('sel-size').value;
+  const dims = document.getElementById('sel-dims').value;
+  const rebuild = document.getElementById('sel-rebuild').value;
+  let name, why, color='#38d9b9';
+  if(priority==='accuracy'){
+    if(size==='small'){name='IndexFlatL2';color='#6eb4f7';why='With a small dataset, brute-force search is fast enough and guarantees 100% recall. No approximation needed. Verified: perfect 99.9% recall in our experiment.';}
+    else{name='IndexHNSWFlat';color='#b59cf7';why='Best recall among all ANN methods (83.1% on GIST-1M). If you can afford the 8.5 GB RAM and ~3 hour build time, HNSW gives you the best accuracy-speed balance.';}
+  } else if(priority==='speed'){
+    if(dims==='high'){name='IVFPQ';color='#52d98c';why='Fastest QPS by far — 129K/sec on GIST-1M, 396K/sec on DEEP-1M. Compressed codes allow lightning-fast approximate distance computation. Note: recall is only 10% on high-D data — use IVFOPQ if you need better accuracy.';}
+    else{name='IVFPQ';color='#52d98c';why='IVFPQ achieves up to 1.7M QPS on low-dimensional DEEP-96. Compressed codes + IVF clustering = extreme speed. Recall is moderate but speed is unmatched.';}
+  } else if(priority==='memory'){
+    if(dims==='high'){name='IVFOPQ';color='#6eb4f7';why='Uses minimal extra memory (same ~4,631 MB as baseline) while nearly doubling recall vs IVFPQ on high-D data (18.7% vs 10.1%). The rotation matrix learning is the only overhead — during inference, memory is identical.';}
+    else{name='IVFPQ';color='#52d98c';why='Smallest memory footprint — virtually no increase from the ~4,649 MB process baseline. Compresses 128-D vectors into 8 bytes. Perfect for embedding billions of items.';}
+  } else {
+    if(size==='small'){name='IndexFlatL2';color='#6eb4f7';why='Small dataset = no approximation needed. Fast, 100% accurate, zero tuning required.';}
+    else if(rebuild==='frequent'){name='IVFFlat';color='#f5a623';why='IVFFlat builds in 7.8 seconds (GIST-1M) vs HNSW\'s 10,647 seconds. For streaming data that needs frequent index rebuilds, this is the only practical choice. 70.3% recall at 4,662 QPS is solid.';}
+    else if(dims==='high'){name='IVFOPQ';color='#38d9b9';why='For high-dimensional production systems: 18.7% recall (vs IVFPQ\'s 10.1%), fast inference (25K QPS), minimal memory. One-time 947s build is acceptable for static or infrequently updated indexes.';}
+    else{name='IVFFlat';color='#f5a623';why='Reliable all-rounder for medium-scale systems. Tunable nprobe lets you trade speed for accuracy. Well-understood behavior. 70% recall at 4,662 QPS on 1M GIST vectors.';}
+  }
+  document.getElementById('rec-name').textContent=name;
+  document.getElementById('rec-name').style.color=color;
+  document.getElementById('rec-why').textContent=why;
+}
+updateRec();
+</script>
+</body>
+</html>
